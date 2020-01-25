@@ -6,7 +6,6 @@ int main(){
     cin >> n;
     int up = 0;
     int down = 0;
-    int count = n;
     int last = 0;
     for (int i=0; i<n; i++){
         int k;
@@ -20,7 +19,7 @@ int main(){
         last = k;
     }
     
-    int sum = count * 5 + up * 6 + down * 4;
+    int sum = n * 5 + up * 6 + down * 4;
     cout << sum << endl;
     return 0;
 }

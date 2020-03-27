@@ -20,6 +20,7 @@ bool cmp(Player &p1, Player &p2){
 bool cmp1(Player &p1, Player &p2){
     return p1.serveTime==p2.serveTime ? p1.vip>p2.vip : p1.serveTime<p2.serveTime;
 }
+//将秒数转换成hh:mm:ss形式的字符串
 string sec2Str(int t){
     int hh = t / 3600;
     t %= 3600;
@@ -62,17 +63,19 @@ int main(){
         T[index-1].vip = 1;
     }
 
+    //记录顾客完成状态，因为可能有vip插队，不是按顺序服务的
     vector<bool> served(n);
     for (int count=0; count<n; count++){
+        //minT、table分别指示最早结束窗口的结束时间和标号
         int minT = T[0].time;
-        int minI = 0;
+        int table = 0;
         for (int i=1; i<k; i++){
             if (T[i].time<minT){
                 minT = T[i].time;
-                minI = i;
+                table = i;
             }
         }
-        //下班了
+        //下班了，不再服务
         if (minT>=21 * 3600){  
             break;
         }
@@ -86,39 +89,35 @@ int main(){
             //取第一个空闲桌子
             for (int j=0; j<k; j++){
                 if (T[j].time <= P[i].arriveTime){
-                    minI = j;
+                    table = j;
                     break;
                 }
             }
-            //若是vip，若后面有空闲vip桌，取该vip桌
+            //若是vip，若后面有空闲vip桌，取第一个空闲vip桌
             if (P[i].vip==1){
-                for (int j=minI; j<k; j++){ 
+                for (int j=table; j<k; j++){ 
                     if (T[j].time<=P[i].arriveTime && T[j].vip==1){
-                        minI = j;
+                        table = j;
                         break;
                     }
                 }
             }
         }
-        //若无空桌子，需排队等最早结束的桌子
-        else{
-            //若桌子是vip桌，需检查是否有vip排队
-            if (T[minI].vip==1){  
-                for (int j=i; j<n&&P[j].arriveTime<=minT; j++){
-                    //第一个排队的vip
-                    if (P[j].vip==1 && !served[j]){
-                        i = j;
-                        break;
-                    }
-                    i++;
+        //若无空桌子且最早结束桌子是vip，需检查当前顾客身后是否有vip排队，有则把当前顾客指定为第一个vip
+        else if (T[table].vip==1){  
+            for (int j=i; j<n&&P[j].arriveTime<=minT; j++){
+                //第一个排队的vip
+                if (P[j].vip==1 && !served[j]){
+                    i = j;  //当前顾客替换为第一个vip
+                    break;
                 }
             }
         }
-        //第minI个桌子，给第i个顾客服务
+        //桌子table给顾客i服务
         served[i] = true;
         P[i].serveTime = P[i].arriveTime<minT ? minT : P[i].arriveTime;
-        T[minI].time = P[i].serveTime + P[i].duration;
-        T[minI].sum++;
+        T[table].time = P[i].serveTime + P[i].duration;
+        T[table].sum++;
     }
     sort(P.begin(), P.end(), cmp1);  //按服务时间排序
     for (int i=0; i<n; i++){
